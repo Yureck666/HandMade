@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, shell } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const { randomUUID } = require("crypto");
@@ -6,6 +6,80 @@ const { pathToFileURL } = require("url");
 const { exec } = require("child_process");
 const util = require("util");
 const execAsync = util.promisify(exec);
+const http = require("http");
+
+const CONTENT_TYPES = {
+  ".html": "text/html; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".js": "application/javascript; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".webp": "image/webp",
+  ".svg": "image/svg+xml",
+};
+
+let previewServer = null;
+let previewPort = null;
+let previewRepoRoot = null;
+
+function startPreviewServer(repoRoot) {
+  if (previewServer && previewRepoRoot === repoRoot) {
+    return Promise.resolve(previewPort);
+  }
+  if (previewServer) {
+    previewServer.close();
+    previewServer = null;
+  }
+  return new Promise((resolve, reject) => {
+    const server = http.createServer((req, res) => {
+      let urlPath = decodeURIComponent((req.url || "/").split("?")[0]);
+      if (urlPath === "/") urlPath = "/index.html";
+      const filePath = path.join(repoRoot, urlPath);
+      if (!filePath.startsWith(path.resolve(repoRoot))) {
+        res.writeHead(403);
+        res.end();
+        return;
+      }
+      fs.readFile(filePath, (err, data) => {
+        if (err) {
+          res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+          res.end("Не найдено: " + urlPath);
+          return;
+        }
+        const ext = path.extname(filePath).toLowerCase();
+        res.writeHead(200, {
+          "Content-Type": CONTENT_TYPES[ext] || "application/octet-stream",
+          "Cache-Control": "no-store",
+        });
+        res.end(data);
+      });
+    });
+    server.listen(0, "127.0.0.1", () => {
+      previewServer = server;
+      previewRepoRoot = repoRoot;
+      previewPort = server.address().port;
+      resolve(previewPort);
+    });
+    server.on("error", reject);
+  });
+}
+
+// Подтягивает актуальный PATH из реестра Windows — нужно, чтобы увидеть
+// Git сразу после установки, не перезапуская программу.
+function refreshPathFromRegistry() {
+  return new Promise((resolve) => {
+    exec(
+      "powershell -NoProfile -Command \"[System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')\"",
+      { windowsHide: true },
+      (err, stdout) => {
+        if (!err && stdout && stdout.trim()) process.env.PATH = stdout.trim();
+        resolve();
+      }
+    );
+  });
+}
 
 // ---------------- Конфиг (помнит, где лежит папка с сайтом) ----------------
 // Хранится в userData, а не в самой папке сайта — чтобы .exe можно было
@@ -72,6 +146,61 @@ app.whenReady().then(createWindow);
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
+});
+
+// ---------------- Установка Git ----------------
+
+ipcMain.handle("git:checkInstalled", async () => {
+  await refreshPathFromRegistry();
+  try {
+    const { stdout } = await execAsync("git --version", { windowsHide: true });
+    return { ok: true, version: stdout.trim() };
+  } catch {
+    return { ok: false };
+  }
+});
+
+ipcMain.handle("git:install", async () => {
+  try {
+    await execAsync("winget --version", { windowsHide: true });
+  } catch {
+    return {
+      ok: false,
+      error: "Не нашла winget (устанавливалка программ Windows), автоматически поставить не получится.",
+      manualUrl: "https://git-scm.com/download/win",
+    };
+  }
+
+  try {
+    await execAsync(
+      "winget install --id Git.Git -e --source winget --silent --accept-package-agreements --accept-source-agreements",
+      { windowsHide: true, timeout: 10 * 60 * 1000 }
+    );
+  } catch (err) {
+    return {
+      ok: false,
+      error: (err.stderr || err.stdout || err.message || "Не получилось установить Git автоматически.")
+        .toString()
+        .trim(),
+      manualUrl: "https://git-scm.com/download/win",
+    };
+  }
+
+  await refreshPathFromRegistry();
+  try {
+    await execAsync("git --version", { windowsHide: true });
+    return { ok: true };
+  } catch {
+    return {
+      ok: false,
+      error: "Git вроде установился, но программа пока его не видит. Попробуйте закрыть и открыть Админку заново.",
+      manualUrl: "https://git-scm.com/download/win",
+    };
+  }
+});
+
+ipcMain.handle("shell:openExternal", (event, url) => {
+  shell.openExternal(url);
 });
 
 // ---------------- Настройка подключения к папке/репозиторию ----------------
@@ -320,3 +449,22 @@ ipcMain.handle("git:status", async () => {
 });
 
 ipcMain.handle("app:getRepoRoot", () => getRepoRoot());
+
+// ---------------- Предпросмотр сайта (локальный сервер) ----------------
+
+ipcMain.handle("preview:open", async () => {
+  const repoRoot = getRepoRoot();
+  if (!repoRoot) return { ok: false, error: "Папка с сайтом не выбрана." };
+  try {
+    const port = await startPreviewServer(repoRoot);
+    const url = `http://127.0.0.1:${port}/`;
+    shell.openExternal(url);
+    return { ok: true, url };
+  } catch (err) {
+    return { ok: false, error: err.message || "Не получилось открыть предпросмотр." };
+  }
+});
+
+app.on("before-quit", () => {
+  if (previewServer) previewServer.close();
+});

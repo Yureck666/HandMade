@@ -14,20 +14,79 @@ const el = (id) => document.getElementById(id);
 // ================= Запуск: выясняем, подключена ли папка с сайтом =================
 
 async function init() {
+  const gitState = await window.api.checkGitInstalled();
+  if (!gitState.ok) {
+    showGitScreen();
+    return;
+  }
+  await afterGitReady();
+}
+
+async function afterGitReady() {
   const state = await window.api.getSetupState();
   if (state.configured) {
-    showMainScreen(state.repoRoot);
+    await showMainScreen(state.repoRoot);
   } else {
     showSetupScreen();
   }
 }
 
+function showGitScreen() {
+  el("gitScreen").classList.remove("hidden");
+  el("setupScreen").classList.add("hidden");
+  el("mainScreen").classList.add("hidden");
+}
+
 function showSetupScreen() {
+  el("gitScreen").classList.add("hidden");
   el("setupScreen").classList.remove("hidden");
   el("mainScreen").classList.add("hidden");
 }
 
+// ================= Экран "нужен Git" =================
+
+el("btnInstallGit").onclick = async () => {
+  const btn = el("btnInstallGit");
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Устанавливаю...";
+  el("gitInstallError").textContent = "";
+  el("btnManualGit").classList.add("hidden");
+  el("gitInstallStatus").textContent = "Это может занять пару минут. Если Windows спросит разрешения — нажмите «Да».";
+  try {
+    const res = await window.api.installGit();
+    if (res.ok) {
+      el("gitInstallStatus").textContent = "Готово! Git установлен.";
+      await afterGitReady();
+    } else {
+      el("gitInstallStatus").textContent = "";
+      el("gitInstallError").textContent = res.error;
+      if (res.manualUrl) {
+        el("btnManualGit").classList.remove("hidden");
+        el("btnManualGit").onclick = () => window.api.openExternal(res.manualUrl);
+      }
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+};
+
+el("btnRecheckGit").onclick = async () => {
+  el("gitInstallError").textContent = "";
+  el("gitInstallStatus").textContent = "Проверяю...";
+  const res = await window.api.checkGitInstalled();
+  if (res.ok) {
+    el("gitInstallStatus").textContent = "";
+    await afterGitReady();
+  } else {
+    el("gitInstallStatus").textContent = "";
+    el("gitInstallError").textContent = "Git пока не найден.";
+  }
+};
+
 async function showMainScreen(repoRoot) {
+  el("gitScreen").classList.add("hidden");
   el("setupScreen").classList.add("hidden");
   el("mainScreen").classList.remove("hidden");
   el("repoPath").textContent = `Папка: ${repoRoot}`;
@@ -317,6 +376,14 @@ async function withBusyButton(button, label, fn) {
     button.textContent = original;
   }
 }
+
+el("btnPreview").onclick = () =>
+  withBusyButton(el("btnPreview"), "Открываю...", async () => {
+    const res = await window.api.openPreview();
+    if (!res.ok) {
+      setStatus(res.error || "Не получилось открыть предпросмотр", "error");
+    }
+  });
 
 el("btnPull").onclick = () =>
   withBusyButton(el("btnPull"), "Обновляю...", async () => {

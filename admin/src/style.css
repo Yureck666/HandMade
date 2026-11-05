@@ -240,6 +240,8 @@ main { padding: 8px 24px 24px; }
   white-space: pre-wrap;
 }
 
+.setup-card .btn { margin-top: 10px; margin-right: 8px; }
+
 .photo-picker { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
 
 .photo-preview {

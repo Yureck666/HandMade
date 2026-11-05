@@ -7,6 +7,19 @@
 </head>
 <body>
 
+<!-- ======================= Экран "нужен Git" ======================= -->
+<section id="gitScreen" class="setup-screen hidden">
+  <div class="setup-card">
+    <h1>Нужен Git</h1>
+    <p class="setup-hint">Эта программа использует Git, чтобы сохранять и отправлять изменения на сайт. Похоже, на этом компьютере его ещё нет.</p>
+    <button id="btnInstallGit" class="btn btn-accent">Установить Git автоматически</button>
+    <button id="btnRecheckGit" class="btn btn-ghost">Я уже установил(а) — проверить снова</button>
+    <p id="gitInstallStatus" class="setup-hint"></p>
+    <p id="gitInstallError" class="setup-error"></p>
+    <button id="btnManualGit" class="btn btn-ghost btn-small hidden">Открыть страницу загрузки Git вручную</button>
+  </div>
+</section>
+
 <!-- ======================= Экран настройки подключения ======================= -->
 <section id="setupScreen" class="setup-screen hidden">
   <div class="setup-card">
@@ -46,6 +59,7 @@
     </div>
     <div class="topbar-actions">
       <button id="btnSettings" class="btn btn-ghost" title="Настройки подключения">⚙</button>
+      <button id="btnPreview" class="btn btn-ghost">👁 Посмотреть сайт</button>
       <button id="btnPull" class="btn btn-secondary">⟳ Обновить</button>
       <button id="btnPush" class="btn btn-accent">↑ Отправить на сайт</button>
     </div>

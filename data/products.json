@@ -3,10 +3,20 @@
     "id": "f2f42fc2-b5e0-4c13-b3f9-dc161f65cda3",
     "visible": true,
     "order": 1,
-    "category": "ukrasheniya",
+    "category": "igrushki",
     "name": "123",
     "price": 123,
     "description": "123123",
     "image": "images/ukrasheniya/f2f42fc2-b5e0-4c13-b3f9-dc161f65cda3.jpg"
+  },
+  {
+    "id": "16c2ece8-86b6-4461-89bb-4451f72b097a",
+    "visible": true,
+    "order": 2,
+    "category": "ukrasheniya",
+    "name": "авывыа",
+    "price": 43234,
+    "description": "выаывавы",
+    "image": "images/ukrasheniya/16c2ece8-86b6-4461-89bb-4451f72b097a.jpg"
   }
 ]

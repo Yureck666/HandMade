@@ -1,6 +1,11 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("api", {
+  // Git как таковой
+  checkGitInstalled: () => ipcRenderer.invoke("git:checkInstalled"),
+  installGit: () => ipcRenderer.invoke("git:install"),
+  openExternal: (url) => ipcRenderer.invoke("shell:openExternal", url),
+
   // Настройка подключения к папке/репозиторию
   getSetupState: () => ipcRenderer.invoke("setup:getState"),
   pickFolder: (title) => ipcRenderer.invoke("dialog:pickFolder", title),
@@ -24,4 +29,6 @@ contextBridge.exposeInMainWorld("api", {
   gitStatus: () => ipcRenderer.invoke("git:status"),
 
   getRepoRoot: () => ipcRenderer.invoke("app:getRepoRoot"),
+
+  openPreview: () => ipcRenderer.invoke("preview:open"),
 });
