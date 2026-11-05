@@ -15,11 +15,7 @@
 <header class="site-header" id="top">
   <div class="header-inner">
     <a href="#top" class="logo">Уютный уголок</a>
-    <nav class="main-nav" aria-label="Разделы">
-      <a href="#ukrasheniya">Украшения</a>
-      <a href="#igrushki">Игрушки</a>
-      <a href="#aksessuary">Аксессуары</a>
-    </nav>
+    <nav class="main-nav" id="mainNav" aria-label="Разделы"></nav>
     <a href="#contacts" class="btn btn-accent btn-header-contact">Написать</a>
   </div>
 </header>
@@ -29,33 +25,7 @@
     <p>Здесь живут украшения и игрушки, сделанные вручную — с теплом и вниманием к мелочам.</p>
   </section>
 
-  <section class="category" id="ukrasheniya" data-category="ukrasheniya">
-    <div class="category-header">
-      <h2>Украшения</h2>
-      <p class="category-caption">Серьги, кулоны, броши — фриволите и макраме</p>
-    </div>
-    <div class="products-grid" id="grid-ukrasheniya"></div>
-  </section>
-
-  <div class="stitch-divider" aria-hidden="true"></div>
-
-  <section class="category" id="igrushki" data-category="igrushki">
-    <div class="category-header">
-      <h2>Игрушки</h2>
-      <p class="category-caption">Пушистые вязаные зверята и не только</p>
-    </div>
-    <div class="products-grid" id="grid-igrushki"></div>
-  </section>
-
-  <div class="stitch-divider" aria-hidden="true"></div>
-
-  <section class="category" id="aksessuary" data-category="aksessuary">
-    <div class="category-header">
-      <h2>Аксессуары</h2>
-      <p class="category-caption">Сувениры и мелочи для дома</p>
-    </div>
-    <div class="products-grid" id="grid-aksessuary"></div>
-  </section>
+  <div id="categoriesRoot"></div>
 </main>
 
 <footer class="site-footer" id="contacts">

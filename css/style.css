@@ -17,7 +17,8 @@ html { scroll-behavior: smooth; }
 
 body {
   margin: 0;
-  background: var(--bg);
+  background: var(--bg) url("../images/bg-ornament.png") repeat;
+  background-size: 410px 410px;
   color: var(--text);
   font-family: "PT Sans", "Segoe UI", sans-serif;
   line-height: 1.5;

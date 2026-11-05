@@ -1,9 +1,3 @@
-const CATEGORIES = {
-  ukrasheniya: { label: "Украшения", badgeClass: "badge-ukrasheniya" },
-  igrushki: { label: "Игрушки", badgeClass: "badge-igrushki" },
-  aksessuary: { label: "Аксессуары", badgeClass: "badge-aksessuary" },
-};
-
 const WHATSAPP_NUMBER = "70000000000"; // TODO: заменить на реальный номер
 
 function askLink(productName) {
@@ -63,35 +57,90 @@ function renderEmptyNote(text) {
   return note;
 }
 
-async function loadProducts() {
-  let products = [];
+async function loadJson(path) {
   try {
-    const res = await fetch("data/products.json", { cache: "no-store" });
-    products = await res.json();
+    const res = await fetch(path, { cache: "no-store" });
+    return await res.json();
   } catch (err) {
-    console.error("Не удалось загрузить товары:", err);
-    products = [];
+    console.error(`Не удалось загрузить ${path}:`, err);
+    return [];
   }
+}
+
+function renderNav(categories) {
+  const nav = document.getElementById("mainNav");
+  if (!nav) return;
+  nav.innerHTML = "";
+  for (const cat of categories) {
+    const link = document.createElement("a");
+    link.href = `#${cat.id}`;
+    link.textContent = cat.label || cat.id;
+    nav.appendChild(link);
+  }
+}
+
+function renderCategorySections(categories, products) {
+  const root = document.getElementById("categoriesRoot");
+  if (!root) return;
+  root.innerHTML = "";
 
   const visible = products.filter((p) => p.visible !== false);
 
-  for (const key of Object.keys(CATEGORIES)) {
-    const grid = document.getElementById(`grid-${key}`);
-    if (!grid) continue;
+  categories.forEach((cat, index) => {
+    if (index > 0) {
+      const divider = document.createElement("div");
+      divider.className = "stitch-divider";
+      divider.setAttribute("aria-hidden", "true");
+      root.appendChild(divider);
+    }
+
+    const section = document.createElement("section");
+    section.className = "category";
+    section.id = cat.id;
+    section.dataset.category = cat.id;
+
+    const header = document.createElement("div");
+    header.className = "category-header";
+    const h2 = document.createElement("h2");
+    h2.textContent = cat.label || cat.id;
+    header.appendChild(h2);
+    if (cat.caption) {
+      const caption = document.createElement("p");
+      caption.className = "category-caption";
+      caption.textContent = cat.caption;
+      header.appendChild(caption);
+    }
+
+    const grid = document.createElement("div");
+    grid.className = "products-grid";
+    grid.id = `grid-${cat.id}`;
 
     const items = visible
-      .filter((p) => p.category === key)
+      .filter((p) => p.category === cat.id)
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
-    grid.innerHTML = "";
     if (items.length === 0) {
       grid.appendChild(renderEmptyNote("Скоро здесь появятся новые работы"));
-      continue;
+    } else {
+      for (const product of items) grid.appendChild(renderCard(product));
     }
-    for (const product of items) {
-      grid.appendChild(renderCard(product));
-    }
-  }
+
+    section.append(header, grid);
+    root.appendChild(section);
+  });
+}
+
+async function loadProducts() {
+  const [categories, products] = await Promise.all([
+    loadJson("data/categories.json"),
+    loadJson("data/products.json"),
+  ]);
+
+  const categoryList = Array.isArray(categories) ? categories : [];
+  const productList = Array.isArray(products) ? products : [];
+
+  renderNav(categoryList);
+  renderCategorySections(categoryList, productList);
 }
 
 document.addEventListener("DOMContentLoaded", loadProducts);
