@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Админка — Уютный уголок</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-titles">
+    <h1>Админка «Уютный уголок»</h1>
+    <p id="repoPath" class="repo-path"></p>
+  </div>
+  <div class="topbar-actions">
+    <button id="btnPull" class="btn btn-secondary">⟳ Обновить</button>
+    <button id="btnPush" class="btn btn-accent">↑ Отправить на сайт</button>
+  </div>
+</header>
+
+<div id="statusBar" class="status-bar">Готово к работе</div>
+
+<main>
+  <div class="toolbar">
+    <button id="btnAdd" class="btn btn-accent">+ Добавить товар</button>
+  </div>
+  <div id="categories"></div>
+</main>
+
+<details id="logPanel" class="log-panel">
+  <summary>Журнал действий</summary>
+  <pre id="logOutput"></pre>
+</details>
+
+<div id="modalOverlay" class="modal-overlay hidden">
+  <div class="modal">
+    <h2 id="modalTitle">Новый товар</h2>
+    <form id="productForm">
+      <label>Категория
+        <select id="fieldCategory">
+          <option value="ukrasheniya">Украшения</option>
+          <option value="igrushki">Игрушки</option>
+          <option value="aksessuary">Аксессуары</option>
+        </select>
+      </label>
+      <label>Название
+        <input type="text" id="fieldName" required placeholder="Например, Серьги «Осень»">
+      </label>
+      <label>Цена, ₽
+        <input type="number" id="fieldPrice" min="0" step="1" placeholder="900">
+      </label>
+      <label>Описание
+        <textarea id="fieldDescription" rows="3" placeholder="Материал, размер — пара слов"></textarea>
+      </label>
+      <label>Фото
+        <div class="photo-picker">
+          <img id="photoPreview" class="photo-preview empty" alt="">
+          <button type="button" id="btnPickPhoto" class="btn btn-secondary">Выбрать фото...</button>
+        </div>
+      </label>
+      <div class="modal-actions">
+        <button type="button" id="btnCancel" class="btn btn-ghost">Отмена</button>
+        <button type="submit" class="btn btn-accent">Сохранить</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="renderer.js"></script>
+</body>
+</html>

@@ -1,0 +1,213 @@
+:root {
+  --bg: #F7F1E6;
+  --card-bg: #FFFCF6;
+  --text: #3B2F26;
+  --text-muted: #7A6C5D;
+  --accent-gold: #B9822E;
+  --accent-blue: #5C6B7A;
+  --accent-burgundy: #8C3A34;
+  --accent-green: #3C6B4E;
+  --border: #E4D7C2;
+  --shadow: rgba(59, 47, 38, 0.15);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", "PT Sans", sans-serif;
+  font-size: 14px;
+}
+
+h1, h2 { margin: 0; font-weight: 700; }
+
+/* ---------- Topbar ---------- */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar h1 { font-size: 20px; color: var(--accent-gold); }
+.repo-path { margin: 2px 0 0; font-size: 11px; color: var(--text-muted); }
+
+.topbar-actions { display: flex; gap: 10px; }
+
+/* ---------- Buttons ---------- */
+
+.btn {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s ease, opacity 0.1s ease;
+}
+
+.btn:hover { transform: translateY(-1px); }
+.btn:disabled { opacity: 0.6; cursor: default; transform: none; }
+
+.btn-accent { background: var(--accent-burgundy); color: #FFFCF6; }
+.btn-secondary { background: var(--accent-blue); color: #FFFCF6; }
+.btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+.btn-small { padding: 6px 10px; font-size: 12px; }
+.btn-danger { color: var(--accent-burgundy); border-color: var(--accent-burgundy); }
+
+/* ---------- Status bar ---------- */
+
+.status-bar {
+  padding: 8px 24px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.status-ok { color: var(--accent-green); }
+.status-error { color: var(--accent-burgundy); font-weight: 600; }
+.status-busy { color: var(--accent-gold); }
+
+/* ---------- Main ---------- */
+
+main { padding: 8px 24px 24px; }
+
+.toolbar { margin-bottom: 16px; }
+
+.cat-section {
+  background: var(--card-bg);
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.cat-section h2 { font-size: 17px; color: var(--accent-gold); margin-bottom: 10px; }
+
+.item-list { display: flex; flex-direction: column; gap: 8px; }
+
+.empty-hint { color: var(--text-muted); font-style: italic; margin: 4px 0; }
+
+.item-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+
+.item-row.item-hidden { opacity: 0.5; }
+
+.item-thumb {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.item-info { flex: 1; min-width: 0; }
+.item-name { font-weight: 600; }
+.item-price { color: var(--accent-gold); font-size: 13px; }
+
+.item-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+/* ---------- Log panel ---------- */
+
+.log-panel {
+  margin: 0 24px 24px;
+  background: var(--card-bg);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  padding: 8px 14px;
+}
+
+.log-panel summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+#logOutput {
+  white-space: pre-wrap;
+  font-size: 12px;
+  max-height: 160px;
+  overflow-y: auto;
+  color: var(--text);
+  margin: 8px 0 0;
+}
+
+/* ---------- Modal ---------- */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(59, 47, 38, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-overlay.hidden { display: none; }
+
+.modal {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 24px;
+  width: 420px;
+  max-width: 90vw;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px var(--shadow);
+}
+
+.modal h2 { color: var(--accent-gold); margin-bottom: 14px; }
+
+#productForm label {
+  display: block;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+#productForm input,
+#productForm select,
+#productForm textarea {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text);
+  background: #fff;
+}
+
+#productForm textarea { resize: vertical; }
+
+.photo-picker { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
+
+.photo-preview {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 10px;
+  background: var(--border);
+}
+
+.photo-preview.empty { opacity: 0.3; }
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
