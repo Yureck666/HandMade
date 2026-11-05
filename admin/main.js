@@ -7,34 +7,48 @@ const { exec } = require("child_process");
 const util = require("util");
 const execAsync = util.promisify(exec);
 
-function getRepoRoot() {
-  // Собранный .exe лежит прямо в корне клона репозитория — поэтому
-  // корень репозитория это папка, где находится сам исполняемый файл.
-  if (app.isPackaged) {
-    return path.dirname(app.getPath("exe"));
-  }
-  // В режиме разработки admin/ лежит внутри корня репозитория.
-  return path.resolve(__dirname, "..");
-}
+// ---------------- Конфиг (помнит, где лежит папка с сайтом) ----------------
+// Хранится в userData, а не в самой папке сайта — чтобы .exe можно было
+// запускать откуда угодно и один раз указать/склонировать нужную папку.
 
-const REPO_ROOT = getRepoRoot();
-const DATA_FILE = path.join(REPO_ROOT, "data", "products.json");
-const IMAGES_DIR = path.join(REPO_ROOT, "images");
+const CONFIG_FILE = path.join(app.getPath("userData"), "config.json");
 
-function readProducts() {
+function readConfig() {
   try {
-    const raw = fs.readFileSync(DATA_FILE, "utf-8");
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (err) {
-    return [];
+    return JSON.parse(fs.readFileSync(CONFIG_FILE, "utf-8"));
+  } catch {
+    return {};
   }
 }
 
-function writeProducts(products) {
-  fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
-  fs.writeFileSync(DATA_FILE, JSON.stringify(products, null, 2) + "\n", "utf-8");
+function writeConfig(cfg) {
+  fs.mkdirSync(path.dirname(CONFIG_FILE), { recursive: true });
+  fs.writeFileSync(CONFIG_FILE, JSON.stringify(cfg, null, 2), "utf-8");
 }
+
+function isValidRepo(folder) {
+  if (!folder) return false;
+  try {
+    return fs.statSync(path.join(folder, ".git")).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
+function getRepoRoot() {
+  const cfg = readConfig();
+  return isValidRepo(cfg.repoPath) ? cfg.repoPath : null;
+}
+
+function ensureDataFiles(repoRoot) {
+  const dataDir = path.join(repoRoot, "data");
+  const dataFile = path.join(dataDir, "products.json");
+  fs.mkdirSync(dataDir, { recursive: true });
+  if (!fs.existsSync(dataFile)) fs.writeFileSync(dataFile, "[]\n", "utf-8");
+  fs.mkdirSync(path.join(repoRoot, "images"), { recursive: true });
+}
+
+// ---------------- Окно ----------------
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -60,22 +74,146 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });
 
+// ---------------- Настройка подключения к папке/репозиторию ----------------
+
+ipcMain.handle("setup:getState", () => {
+  const repoRoot = getRepoRoot();
+  if (repoRoot) ensureDataFiles(repoRoot);
+  return { configured: !!repoRoot, repoRoot };
+});
+
+ipcMain.handle("dialog:pickFolder", async (event, title) => {
+  const result = await dialog.showOpenDialog({
+    title: title || "Выберите папку",
+    properties: ["openDirectory", "createDirectory"],
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+  return result.filePaths[0];
+});
+
+ipcMain.handle("setup:useExistingFolder", (event, folder) => {
+  if (!isValidRepo(folder)) {
+    return { ok: false, error: "В этой папке не найден git-репозиторий (папка .git). Нужна папка с уже склонированным сайтом." };
+  }
+  const cfg = readConfig();
+  cfg.repoPath = folder;
+  writeConfig(cfg);
+  ensureDataFiles(folder);
+  return { ok: true, repoRoot: folder };
+});
+
+ipcMain.handle("setup:cloneRepo", async (event, { url, parentFolder, folderName }) => {
+  if (!url || !parentFolder) return { ok: false, error: "Не хватает ссылки или папки." };
+  const name = (folderName && folderName.trim()) ||
+    (url.split("/").pop() || "site").replace(/\.git$/i, "") || "site";
+  const dest = path.join(parentFolder, name);
+
+  if (fs.existsSync(dest)) {
+    if (isValidRepo(dest)) {
+      const cfg = readConfig();
+      cfg.repoPath = dest;
+      writeConfig(cfg);
+      ensureDataFiles(dest);
+      return { ok: true, repoRoot: dest, output: "Папка уже существует и это готовый репозиторий — использую её." };
+    }
+    return { ok: false, error: `Папка "${dest}" уже существует и это не git-репозиторий. Выберите другое место или имя.` };
+  }
+
+  try {
+    const { stdout, stderr } = await execAsync(`git clone "${url}" "${name}"`, {
+      cwd: parentFolder,
+      windowsHide: true,
+    });
+    const cfg = readConfig();
+    cfg.repoPath = dest;
+    writeConfig(cfg);
+    ensureDataFiles(dest);
+    return { ok: true, repoRoot: dest, output: [stdout, stderr].filter(Boolean).join("\n") };
+  } catch (err) {
+    return { ok: false, error: (err.stderr || err.message || "Не получилось склонировать репозиторий").trim() };
+  }
+});
+
+ipcMain.handle("setup:getRemote", async () => {
+  const repoRoot = getRepoRoot();
+  if (!repoRoot) return { ok: false, error: "Папка с сайтом ещё не выбрана." };
+  try {
+    const { stdout } = await execAsync("git remote get-url origin", { cwd: repoRoot, windowsHide: true });
+    return { ok: true, url: stdout.trim() };
+  } catch {
+    return { ok: true, url: "" };
+  }
+});
+
+ipcMain.handle("setup:setRemote", async (event, url) => {
+  const repoRoot = getRepoRoot();
+  if (!repoRoot) return { ok: false, error: "Папка с сайтом ещё не выбрана." };
+  try {
+    await execAsync("git remote get-url origin", { cwd: repoRoot, windowsHide: true });
+    await execAsync(`git remote set-url origin "${url}"`, { cwd: repoRoot, windowsHide: true });
+  } catch {
+    try {
+      await execAsync(`git remote add origin "${url}"`, { cwd: repoRoot, windowsHide: true });
+    } catch (err) {
+      return { ok: false, error: (err.stderr || err.message || "").trim() };
+    }
+  }
+  return { ok: true };
+});
+
+ipcMain.handle("setup:testConnection", async () => {
+  const repoRoot = getRepoRoot();
+  if (!repoRoot) return { ok: false, error: "Папка с сайтом ещё не выбрана." };
+  try {
+    const { stdout, stderr } = await execAsync("git ls-remote --heads origin", {
+      cwd: repoRoot,
+      windowsHide: true,
+      timeout: 60000,
+    });
+    return { ok: true, output: [stdout, stderr].filter(Boolean).join("\n") || "Связь с GitHub есть." };
+  } catch (err) {
+    return { ok: false, error: (err.stderr || err.message || "").trim() };
+  }
+});
+
 // ---------------- Products ----------------
 
+function readProducts(repoRoot) {
+  try {
+    const raw = fs.readFileSync(path.join(repoRoot, "data", "products.json"), "utf-8");
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeProducts(repoRoot, products) {
+  const dataFile = path.join(repoRoot, "data", "products.json");
+  fs.mkdirSync(path.dirname(dataFile), { recursive: true });
+  fs.writeFileSync(dataFile, JSON.stringify(products, null, 2) + "\n", "utf-8");
+}
+
 ipcMain.handle("products:list", () => {
-  const products = readProducts();
-  return products.map((p) => ({
-    ...p,
-    imageUrl: p.image ? pathToFileURL(path.join(REPO_ROOT, p.image)).href : null,
-  }));
+  const repoRoot = getRepoRoot();
+  if (!repoRoot) return { ok: false, error: "Папка с сайтом не выбрана." };
+  const products = readProducts(repoRoot);
+  return {
+    ok: true,
+    products: products.map((p) => ({
+      ...p,
+      imageUrl: p.image ? pathToFileURL(path.join(repoRoot, p.image)).href : null,
+    })),
+  };
 });
 
 ipcMain.handle("products:save", (event, product, newImagePath) => {
-  const products = readProducts();
-  let entry = products.find((p) => p.id === product.id);
-  const isNew = !entry;
+  const repoRoot = getRepoRoot();
+  if (!repoRoot) return { ok: false, error: "Папка с сайтом не выбрана." };
 
-  if (isNew) {
+  const products = readProducts(repoRoot);
+  let entry = products.find((p) => p.id === product.id);
+  if (!entry) {
     entry = { id: product.id || randomUUID(), visible: true, order: products.length + 1 };
     products.push(entry);
   }
@@ -88,33 +226,39 @@ ipcMain.handle("products:save", (event, product, newImagePath) => {
 
   if (newImagePath) {
     const ext = path.extname(newImagePath) || ".jpg";
-    const destDir = path.join(IMAGES_DIR, entry.category);
+    const destDir = path.join(repoRoot, "images", entry.category);
     fs.mkdirSync(destDir, { recursive: true });
     const destFile = path.join(destDir, `${entry.id}${ext}`);
     fs.copyFileSync(newImagePath, destFile);
     entry.image = `images/${entry.category}/${entry.id}${ext}`;
   }
 
-  writeProducts(products);
-  return { ...entry, imageUrl: entry.image ? pathToFileURL(path.join(REPO_ROOT, entry.image)).href : null };
+  writeProducts(repoRoot, products);
+  return {
+    ok: true,
+    product: { ...entry, imageUrl: entry.image ? pathToFileURL(path.join(repoRoot, entry.image)).href : null },
+  };
 });
 
 ipcMain.handle("products:delete", (event, id) => {
-  const products = readProducts();
-  const next = products.filter((p) => p.id !== id);
-  writeProducts(next);
-  return true;
+  const repoRoot = getRepoRoot();
+  if (!repoRoot) return { ok: false, error: "Папка с сайтом не выбрана." };
+  const next = readProducts(repoRoot).filter((p) => p.id !== id);
+  writeProducts(repoRoot, next);
+  return { ok: true };
 });
 
 ipcMain.handle("products:setVisible", (event, id, visible) => {
-  const products = readProducts();
+  const repoRoot = getRepoRoot();
+  if (!repoRoot) return { ok: false, error: "Папка с сайтом не выбрана." };
+  const products = readProducts(repoRoot);
   const entry = products.find((p) => p.id === id);
   if (entry) entry.visible = visible;
-  writeProducts(products);
-  return true;
+  writeProducts(repoRoot, products);
+  return { ok: true };
 });
 
-// ---------------- Files / dialogs ----------------
+// ---------------- Файлы / диалоги ----------------
 
 ipcMain.handle("dialog:pickImage", async () => {
   const result = await dialog.showOpenDialog({
@@ -134,24 +278,31 @@ ipcMain.handle("fs:toFileUrl", (event, absolutePath) => {
   }
 });
 
-// ---------------- Git ----------------
+// ---------------- Git (обновить / отправить) ----------------
 
-function runGit(args) {
-  return execAsync(`git ${args}`, { cwd: REPO_ROOT, windowsHide: true }).then(
+function runGit(repoRoot, args) {
+  return execAsync(`git ${args}`, { cwd: repoRoot, windowsHide: true }).then(
     ({ stdout, stderr }) => ({ ok: true, output: [stdout, stderr].filter(Boolean).join("\n").trim() }),
     (err) => ({ ok: false, output: (err.stderr || err.message || "").trim() })
   );
 }
 
-ipcMain.handle("git:pull", async () => runGit("pull"));
+ipcMain.handle("git:pull", async () => {
+  const repoRoot = getRepoRoot();
+  if (!repoRoot) return { ok: false, output: "Папка с сайтом не выбрана." };
+  return runGit(repoRoot, "pull");
+});
 
 ipcMain.handle("git:push", async (event, message) => {
+  const repoRoot = getRepoRoot();
+  if (!repoRoot) return { ok: false, output: "Папка с сайтом не выбрана." };
+
   const safeMessage = String(message || "Обновление ассортимента").replace(/"/g, "'");
 
-  const add = await runGit("add -A");
+  const add = await runGit(repoRoot, "add -A");
   if (!add.ok) return add;
 
-  const commit = await runGit(`commit -m "${safeMessage}"`);
+  const commit = await runGit(repoRoot, `commit -m "${safeMessage}"`);
   if (!commit.ok) {
     if (/nothing to commit/i.test(commit.output)) {
       return { ok: true, output: "Изменений нет — публиковать нечего." };
@@ -159,10 +310,13 @@ ipcMain.handle("git:push", async (event, message) => {
     return commit;
   }
 
-  const push = await runGit("push");
-  return push;
+  return runGit(repoRoot, "push");
 });
 
-ipcMain.handle("git:status", async () => runGit("status --short"));
+ipcMain.handle("git:status", async () => {
+  const repoRoot = getRepoRoot();
+  if (!repoRoot) return { ok: false, output: "Папка с сайтом не выбрана." };
+  return runGit(repoRoot, "status --short");
+});
 
-ipcMain.handle("app:getRepoRoot", () => REPO_ROOT);
+ipcMain.handle("app:getRepoRoot", () => getRepoRoot());

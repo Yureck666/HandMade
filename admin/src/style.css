@@ -13,6 +13,8 @@
 
 * { box-sizing: border-box; }
 
+.hidden { display: none !important; }
+
 body {
   margin: 0;
   background: var(--bg);
@@ -169,7 +171,9 @@ main { padding: 8px 24px 24px; }
 
 .modal h2 { color: var(--accent-gold); margin-bottom: 14px; }
 
-#productForm label {
+#productForm label,
+#settingsOverlay label,
+.setup-card label {
   display: block;
   font-size: 13px;
   color: var(--text-muted);
@@ -178,7 +182,9 @@ main { padding: 8px 24px 24px; }
 
 #productForm input,
 #productForm select,
-#productForm textarea {
+#productForm textarea,
+#settingsOverlay input,
+.setup-card input {
   display: block;
   width: 100%;
   margin-top: 4px;
@@ -192,6 +198,47 @@ main { padding: 8px 24px 24px; }
 }
 
 #productForm textarea { resize: vertical; }
+
+.inline-row { display: flex; gap: 8px; align-items: center; }
+.inline-row input { margin-top: 0; }
+
+/* ---------- Setup screen ---------- */
+
+.setup-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.setup-card {
+  background: var(--card-bg);
+  border-radius: 18px;
+  padding: 32px;
+  width: 460px;
+  max-width: 100%;
+  box-shadow: 0 10px 30px var(--shadow);
+}
+
+.setup-card h1 { color: var(--accent-gold); font-size: 22px; margin-bottom: 6px; }
+.setup-hint { color: var(--text-muted); font-size: 13px; margin: 2px 0 12px; }
+
+.setup-option {
+  border-top: 1px dashed var(--border);
+  padding-top: 18px;
+  margin-top: 18px;
+}
+
+.setup-option h2 { font-size: 15px; color: var(--text); margin-bottom: 4px; }
+
+.setup-error {
+  color: var(--accent-burgundy);
+  font-weight: 600;
+  font-size: 13px;
+  margin-top: 16px;
+  white-space: pre-wrap;
+}
 
 .photo-picker { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
 

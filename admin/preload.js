@@ -1,6 +1,16 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("api", {
+  // Настройка подключения к папке/репозиторию
+  getSetupState: () => ipcRenderer.invoke("setup:getState"),
+  pickFolder: (title) => ipcRenderer.invoke("dialog:pickFolder", title),
+  useExistingFolder: (folder) => ipcRenderer.invoke("setup:useExistingFolder", folder),
+  cloneRepo: (opts) => ipcRenderer.invoke("setup:cloneRepo", opts),
+  getRemote: () => ipcRenderer.invoke("setup:getRemote"),
+  setRemote: (url) => ipcRenderer.invoke("setup:setRemote", url),
+  testConnection: () => ipcRenderer.invoke("setup:testConnection"),
+
+  // Товары
   listProducts: () => ipcRenderer.invoke("products:list"),
   saveProduct: (product, newImagePath) => ipcRenderer.invoke("products:save", product, newImagePath),
   deleteProduct: (id) => ipcRenderer.invoke("products:delete", id),

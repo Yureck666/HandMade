@@ -7,11 +7,138 @@ const CATEGORIES = [
 let products = [];
 let editingId = null;
 let pickedImagePath = null;
+let clonedParentFolder = null;
 
 const el = (id) => document.getElementById(id);
 
+// ================= Запуск: выясняем, подключена ли папка с сайтом =================
+
+async function init() {
+  const state = await window.api.getSetupState();
+  if (state.configured) {
+    showMainScreen(state.repoRoot);
+  } else {
+    showSetupScreen();
+  }
+}
+
+function showSetupScreen() {
+  el("setupScreen").classList.remove("hidden");
+  el("mainScreen").classList.add("hidden");
+}
+
+async function showMainScreen(repoRoot) {
+  el("setupScreen").classList.add("hidden");
+  el("mainScreen").classList.remove("hidden");
+  el("repoPath").textContent = `Папка: ${repoRoot}`;
+  await refreshList();
+}
+
+// ================= Экран настройки подключения =================
+
+function setSetupError(text) {
+  el("setupError").textContent = text || "";
+}
+
+el("btnChooseFolder").onclick = async () => {
+  setSetupError("");
+  const folder = await window.api.pickFolder("Выберите папку с сайтом");
+  if (!folder) return;
+  const res = await window.api.useExistingFolder(folder);
+  if (res.ok) {
+    await showMainScreen(res.repoRoot);
+  } else {
+    setSetupError(res.error);
+  }
+};
+
+el("btnPickParent").onclick = async () => {
+  const folder = await window.api.pickFolder("Куда сохранить сайт");
+  if (!folder) return;
+  clonedParentFolder = folder;
+  el("cloneParent").value = folder;
+};
+
+el("btnClone").onclick = async () => {
+  setSetupError("");
+  const url = el("cloneUrl").value.trim();
+  if (!url) {
+    setSetupError("Вставьте ссылку на репозиторий.");
+    return;
+  }
+  if (!clonedParentFolder) {
+    setSetupError("Сначала выберите, куда сохранить.");
+    return;
+  }
+  const btn = el("btnClone");
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Скачиваю...";
+  try {
+    const res = await window.api.cloneRepo({ url, parentFolder: clonedParentFolder });
+    if (res.ok) {
+      await showMainScreen(res.repoRoot);
+    } else {
+      setSetupError(res.error);
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+};
+
+// ================= Настройки (⚙) =================
+
+el("btnSettings").onclick = async () => {
+  const [rootState, remoteRes] = await Promise.all([window.api.getSetupState(), window.api.getRemote()]);
+  el("settingsRepoPath").value = rootState.repoRoot || "";
+  el("settingsRemote").value = remoteRes.ok ? remoteRes.url : "";
+  el("settingsStatus").textContent = "";
+  el("settingsOverlay").classList.remove("hidden");
+};
+
+el("btnCloseSettings").onclick = () => el("settingsOverlay").classList.add("hidden");
+
+el("btnChangeFolder").onclick = async () => {
+  const folder = await window.api.pickFolder("Выберите папку с сайтом");
+  if (!folder) return;
+  const res = await window.api.useExistingFolder(folder);
+  if (res.ok) {
+    el("settingsRepoPath").value = res.repoRoot;
+    el("settingsStatus").textContent = "Папка подключена.";
+    await showMainScreen(res.repoRoot);
+  } else {
+    el("settingsStatus").textContent = res.error;
+  }
+};
+
+el("btnSaveRemote").onclick = async () => {
+  const url = el("settingsRemote").value.trim();
+  if (!url) return;
+  const res = await window.api.setRemote(url);
+  el("settingsStatus").textContent = res.ok ? "Сохранено." : res.error;
+};
+
+el("btnTestConnection").onclick = async () => {
+  const btn = el("btnTestConnection");
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Проверяю...";
+  el("settingsStatus").textContent = "Если потребуется — сейчас откроется окно входа в GitHub...";
+  try {
+    const res = await window.api.testConnection();
+    el("settingsStatus").textContent = res.ok ? "Связь с GitHub есть, всё в порядке." : res.error;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+};
+
+// ================= Список товаров =================
+
 async function refreshList() {
-  products = await window.api.listProducts();
+  const res = await window.api.listProducts();
+  products = res.ok ? res.products : [];
   renderCategories();
 }
 
@@ -97,6 +224,8 @@ function renderItemRow(p) {
   return row;
 }
 
+// ================= Модалка добавления/редактирования =================
+
 function openModal(product) {
   editingId = product ? product.id : null;
   pickedImagePath = null;
@@ -158,8 +287,11 @@ el("productForm").onsubmit = async (e) => {
 el("modalOverlay").addEventListener("click", (e) => {
   if (e.target === el("modalOverlay")) closeModal();
 });
+el("settingsOverlay").addEventListener("click", (e) => {
+  if (e.target === el("settingsOverlay")) el("settingsOverlay").classList.add("hidden");
+});
 
-// ---------------- Git actions ----------------
+// ================= Git: обновить / отправить =================
 
 function setStatus(text, kind) {
   const bar = el("statusBar");
@@ -214,10 +346,4 @@ el("btnPush").onclick = () =>
     }
   });
 
-// ---------------- Init ----------------
-
-window.api.getRepoRoot().then((root) => {
-  el("repoPath").textContent = `Папка: ${root}`;
-});
-
-refreshList();
+init();

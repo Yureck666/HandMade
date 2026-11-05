@@ -7,31 +7,66 @@
 </head>
 <body>
 
-<header class="topbar">
-  <div class="topbar-titles">
-    <h1>Админка «Уютный уголок»</h1>
-    <p id="repoPath" class="repo-path"></p>
+<!-- ======================= Экран настройки подключения ======================= -->
+<section id="setupScreen" class="setup-screen hidden">
+  <div class="setup-card">
+    <h1>Подключение к сайту</h1>
+    <p class="setup-hint">Нужно один раз указать папку с сайтом на этом компьютере.</p>
+
+    <div class="setup-option">
+      <h2>Папка уже есть на компьютере</h2>
+      <p class="setup-hint">Если сайт уже когда-то скачивали (клонировали) сюда.</p>
+      <button id="btnChooseFolder" class="btn btn-secondary">Выбрать папку...</button>
+    </div>
+
+    <div class="setup-option">
+      <h2>Скачать сайт по ссылке (первый раз)</h2>
+      <label>Ссылка на репозиторий
+        <input type="text" id="cloneUrl" placeholder="https://github.com/username/site.git">
+      </label>
+      <label>Куда сохранить
+        <div class="inline-row">
+          <input type="text" id="cloneParent" placeholder="Папка не выбрана" readonly>
+          <button id="btnPickParent" class="btn btn-ghost btn-small">Выбрать...</button>
+        </div>
+      </label>
+      <button id="btnClone" class="btn btn-accent">Скачать и подключить</button>
+    </div>
+
+    <p id="setupError" class="setup-error"></p>
   </div>
-  <div class="topbar-actions">
-    <button id="btnPull" class="btn btn-secondary">⟳ Обновить</button>
-    <button id="btnPush" class="btn btn-accent">↑ Отправить на сайт</button>
-  </div>
-</header>
+</section>
 
-<div id="statusBar" class="status-bar">Готово к работе</div>
+<!-- ======================= Основной экран ======================= -->
+<div id="mainScreen" class="hidden">
+  <header class="topbar">
+    <div class="topbar-titles">
+      <h1>Админка «Уютный уголок»</h1>
+      <p id="repoPath" class="repo-path"></p>
+    </div>
+    <div class="topbar-actions">
+      <button id="btnSettings" class="btn btn-ghost" title="Настройки подключения">⚙</button>
+      <button id="btnPull" class="btn btn-secondary">⟳ Обновить</button>
+      <button id="btnPush" class="btn btn-accent">↑ Отправить на сайт</button>
+    </div>
+  </header>
 
-<main>
-  <div class="toolbar">
-    <button id="btnAdd" class="btn btn-accent">+ Добавить товар</button>
-  </div>
-  <div id="categories"></div>
-</main>
+  <div id="statusBar" class="status-bar">Готово к работе</div>
 
-<details id="logPanel" class="log-panel">
-  <summary>Журнал действий</summary>
-  <pre id="logOutput"></pre>
-</details>
+  <main>
+    <div class="toolbar">
+      <button id="btnAdd" class="btn btn-accent">+ Добавить товар</button>
+    </div>
+    <div id="categories"></div>
+  </main>
 
+  <details id="logPanel" class="log-panel">
+    <summary>Журнал действий</summary>
+    <pre id="logOutput"></pre>
+  </details>
+</div>
+
+<!-- ======================= Модалка товара ======================= -->
 <div id="modalOverlay" class="modal-overlay hidden">
   <div class="modal">
     <h2 id="modalTitle">Новый товар</h2>
@@ -63,6 +98,30 @@
         <button type="submit" class="btn btn-accent">Сохранить</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- ======================= Модалка настроек подключения ======================= -->
+<div id="settingsOverlay" class="modal-overlay hidden">
+  <div class="modal">
+    <h2>Настройки подключения</h2>
+    <label>Папка с сайтом
+      <div class="inline-row">
+        <input type="text" id="settingsRepoPath" readonly>
+        <button id="btnChangeFolder" class="btn btn-ghost btn-small">Сменить...</button>
+      </div>
+    </label>
+    <label>Адрес на GitHub (origin)
+      <div class="inline-row">
+        <input type="text" id="settingsRemote" placeholder="https://github.com/username/site.git">
+        <button id="btnSaveRemote" class="btn btn-ghost btn-small">Сохранить</button>
+      </div>
+    </label>
+    <button id="btnTestConnection" class="btn btn-secondary">Проверить подключение / войти в GitHub</button>
+    <p id="settingsStatus" class="setup-hint"></p>
+    <div class="modal-actions">
+      <button type="button" id="btnCloseSettings" class="btn btn-ghost">Закрыть</button>
+    </div>
   </div>
 </div>
 

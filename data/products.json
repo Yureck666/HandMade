@@ -1,1 +1,12 @@
-[]
+[
+  {
+    "id": "f2f42fc2-b5e0-4c13-b3f9-dc161f65cda3",
+    "visible": true,
+    "order": 1,
+    "category": "ukrasheniya",
+    "name": "123",
+    "price": 123,
+    "description": "123123",
+    "image": "images/ukrasheniya/f2f42fc2-b5e0-4c13-b3f9-dc161f65cda3.jpg"
+  }
+]
