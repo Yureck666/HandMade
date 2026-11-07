@@ -286,6 +286,7 @@ h1, h2, h3, .logo {
 .btn-whatsapp { background: #4C8C6B; }
 .btn-telegram { background: var(--accent-blue); }
 .btn-vk { background: #5C7A99; }
+.btn-max { background: linear-gradient(135deg, #3B6EFF 0%, #8B3FF0 100%); }
 
 .footer-signature {
   margin-top: 30px;

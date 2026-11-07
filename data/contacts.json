@@ -1,0 +1,22 @@
+[
+  {
+    "id": "whatsapp",
+    "enabled": false,
+    "value": ""
+  },
+  {
+    "id": "telegram",
+    "enabled": false,
+    "value": ""
+  },
+  {
+    "id": "vk",
+    "enabled": false,
+    "value": ""
+  },
+  {
+    "id": "max",
+    "enabled": true,
+    "value": ""
+  }
+]

@@ -1,8 +1,34 @@
-const WHATSAPP_NUMBER = "70000000000"; // TODO: заменить на реальный номер
+// Способы связи: id из data/contacts.json → как показать кнопку и как
+// собрать ссылку из сырого значения (номер/логин), которое вводит админка.
+const CONTACT_TYPES = {
+  whatsapp: {
+    label: "WhatsApp",
+    cssClass: "btn-whatsapp",
+    buildUrl: (value) => `https://wa.me/${value.replace(/\D/g, "")}`,
+  },
+  telegram: {
+    label: "Telegram",
+    cssClass: "btn-telegram",
+    buildUrl: (value) => `https://t.me/${value.replace(/^@/, "")}`,
+  },
+  vk: {
+    label: "VK",
+    cssClass: "btn-vk",
+    buildUrl: (value) => `https://vk.com/${value.replace(/^@/, "")}`,
+  },
+  max: {
+    label: "MAX",
+    cssClass: "btn-max",
+    buildUrl: (value) => `https://max.ru/${value.replace(/^@/, "")}`,
+  },
+};
+
+let whatsappNumber = "";
 
 function askLink(productName) {
+  if (!whatsappNumber) return "#contacts";
   const text = encodeURIComponent(`Здравствуйте! Интересует «${productName}»`);
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${text}`;
+  return `https://wa.me/${whatsappNumber}?text=${text}`;
 }
 
 function formatPrice(price) {
@@ -130,17 +156,41 @@ function renderCategorySections(categories, products) {
   });
 }
 
+function renderContacts(contacts) {
+  const container = document.getElementById("contactButtons");
+  if (!container) return;
+  container.innerHTML = "";
+  for (const c of contacts) {
+    if (!c.enabled || !c.value) continue;
+    const type = CONTACT_TYPES[c.id];
+    if (!type) continue;
+    const link = document.createElement("a");
+    link.href = type.buildUrl(c.value);
+    link.className = `btn btn-contact ${type.cssClass}`;
+    link.target = "_blank";
+    link.rel = "noopener";
+    link.textContent = type.label;
+    container.appendChild(link);
+  }
+}
+
 async function loadProducts() {
-  const [categories, products] = await Promise.all([
+  const [categories, products, contacts] = await Promise.all([
     loadJson("data/categories.json"),
     loadJson("data/products.json"),
+    loadJson("data/contacts.json"),
   ]);
 
   const categoryList = Array.isArray(categories) ? categories : [];
   const productList = Array.isArray(products) ? products : [];
+  const contactList = Array.isArray(contacts) ? contacts : [];
+
+  const whatsapp = contactList.find((c) => c.id === "whatsapp" && c.enabled && c.value);
+  whatsappNumber = whatsapp ? whatsapp.value.replace(/\D/g, "") : "";
 
   renderNav(categoryList);
   renderCategorySections(categoryList, productList);
+  renderContacts(contactList);
 }
 
 document.addEventListener("DOMContentLoaded", loadProducts);
