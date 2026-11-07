@@ -6,17 +6,26 @@ rem Russian text live in update-worker.ps1, which this file copies to a temp
 rem location and runs via PowerShell (safe for Unicode, and safe to let git
 rem overwrite the original copy mid-run since we already run from the copy).
 setlocal
-set "SELFDIR=%~dp0"
+rem %~dp0 always ends with a trailing backslash. A path quoted as "...\"
+rem has that backslash escape the closing quote instead of ending the
+rem string (classic Windows command-line parsing gotcha) - this silently
+rem corrupted the -Repo argument passed to PowerShell. The "%~dp0." trick
+rem below resolves the same folder without the trailing backslash.
+for %%I in ("%~dp0.") do set "SELFDIR=%%~fI"
 set "REPO=%~1"
 set "EXE=%~2"
 set "MODE=%~3"
 if "%REPO%"=="" set "REPO=%SELFDIR%"
+if "%REPO:~-1%"=="\" set "REPO=%REPO:~0,-1%"
 if "%MODE%"=="" set "MODE=pull"
-if "%EXE%"=="" (
-  for %%F in ("%SELFDIR%*.exe") do set "EXE=%%~fF"
-)
+rem Note: if EXE is empty, we do NOT try to find it here with a plain
+rem "for" loop - cmd.exe's FOR variables go through the console's OEM
+rem codepage, which corrupts a Cyrillic filename like "Админка.exe" into
+rem garbage bytes (confirmed: Start-Process then fails with "file not
+rem found"). PowerShell handles Unicode paths correctly, so the worker
+rem script does that lookup itself when -Exe is blank.
 
-set "WORKER=%SELFDIR%update-worker.ps1"
+set "WORKER=%SELFDIR%\update-worker.ps1"
 set "TEMPWORKER=%TEMP%\cozy-corner-update-worker.ps1"
 
 if not exist "%WORKER%" (

@@ -11,7 +11,11 @@ function Say($text) {
 }
 
 function RelaunchAndExit($code) {
-  Start-Process -FilePath $Exe
+  if ($Exe -and (Test-Path -LiteralPath $Exe)) {
+    Start-Process -FilePath $Exe
+  } else {
+    Say "Не нашла файл программы, чтобы открыть его заново — откройте вручную."
+  }
   if ($code -ne 0) {
     Read-Host "Нажмите Enter, чтобы закрыть это окно"
   }
@@ -20,9 +24,20 @@ function RelaunchAndExit($code) {
 
 Say "Обновляю админку, подождите..."
 
-$exeName = [System.IO.Path]::GetFileNameWithoutExtension($Exe)
-while (Get-Process -Name $exeName -ErrorAction SilentlyContinue) {
-  Start-Sleep -Milliseconds 300
+# Если путь к .exe не передали явно — находим его сами. Важно делать это
+# именно здесь, в PowerShell: у cmd.exe/batch переменные идут через
+# кодовую страницу консоли и портят кириллическое имя файла (проверено —
+# из-за этого раньше Start-Process не находил "Админка.exe").
+if (-not $Exe -or -not (Test-Path -LiteralPath $Exe)) {
+  $found = Get-ChildItem -LiteralPath $Repo -Filter "*.exe" -File -ErrorAction SilentlyContinue | Select-Object -First 1
+  if ($found) { $Exe = $found.FullName }
+}
+
+if ($Exe) {
+  $exeName = [System.IO.Path]::GetFileNameWithoutExtension($Exe)
+  while (Get-Process -Name $exeName -ErrorAction SilentlyContinue) {
+    Start-Sleep -Milliseconds 300
+  }
 }
 
 try {
