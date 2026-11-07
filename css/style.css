@@ -319,6 +319,17 @@ h1, h2, h3, .logo {
   flex: 1;
 }
 
+.description-toggle {
+  color: var(--accent-burgundy);
+  cursor: pointer;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+
+.description-toggle:hover {
+  text-decoration: none;
+}
+
 .btn-ask {
   align-self: flex-start;
   margin-top: 8px;
