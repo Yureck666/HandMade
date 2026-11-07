@@ -79,6 +79,17 @@ try {
 $branch = (git rev-parse --abbrev-ref HEAD 2>$null)
 if (-not $branch) { $branch = "master" }
 
+# На некоторых компьютерах git вообще не настроен (нет user.name/user.email),
+# и тогда "git commit" ниже падает с "unable to auto-detect email address".
+# Выставляем identity локально для этого репозитория (не трогая глобальные
+# настройки), только если её ещё нет.
+if (-not (git config user.email 2>$null)) {
+  git config user.email "update@cozy-corner.local" *> $null
+}
+if (-not (git config user.name 2>$null)) {
+  git config user.name "soz1959" *> $null
+}
+
 git add -A *> $null
 git commit -m "Локальные изменения перед обновлением" *> $null
 
