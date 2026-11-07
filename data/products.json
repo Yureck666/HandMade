@@ -4,19 +4,65 @@
     "visible": true,
     "order": 1,
     "category": "igrushki",
-    "name": "123",
-    "price": 123,
-    "description": "123123",
-    "image": "images/ukrasheniya/f2f42fc2-b5e0-4c13-b3f9-dc161f65cda3.jpg"
+    "name": "Хранитель сноведений",
+    "price": 1500,
+    "description": "Хранитель сновидений. Ручная работа.\nОтсеивает сновидения и мысли, оставляя важные для Вас.\nОберег выполнен с учетом фаз Луны (обязательных захват полнолуния – особенно сильное время). Полнолуние хорошо стабилизирует и помогает сохранить то, что важно и дорого.\nЕсли жить в соответствии с ритмами космоса, то можно сделать свою жизнь гармоничнее и проще.\nРазмещают у алтаря, спального или рабочего места.\nПомните, что ручная работ отличается от фабричных форм. \nНе предназначен для динамического использования (носить с собой).",
+    "image": "images/igrushki/f2f42fc2-b5e0-4c13-b3f9-dc161f65cda3.jpg",
+    "media": [
+      {
+        "id": "62ef5324-bb2c-41a8-b521-ce01540654fa",
+        "type": "image",
+        "src": "images/igrushki/f2f42fc2-b5e0-4c13-b3f9-dc161f65cda3.jpg"
+      }
+    ]
   },
   {
     "id": "16c2ece8-86b6-4461-89bb-4451f72b097a",
     "visible": true,
     "order": 2,
     "category": "ukrasheniya",
-    "name": "авывыа",
-    "price": 43234,
-    "description": "выаывавы",
-    "image": "images/ukrasheniya/16c2ece8-86b6-4461-89bb-4451f72b097a.jpg"
+    "name": "Серьги С-3",
+    "price": 1500,
+    "description": "Фриволите",
+    "media": [
+      {
+        "id": "3a4b06c7-1014-4ac2-a25d-7e3c5ccf416e",
+        "type": "image",
+        "src": "images/ukrasheniya/16c2ece8-86b6-4461-89bb-4451f72b097a.jpg"
+      }
+    ]
+  },
+  {
+    "id": "3ed87b19-51b4-425a-8043-cd558d76df9e",
+    "visible": true,
+    "order": 3,
+    "category": "ukrasheniya",
+    "name": "Серьги С-4 (цветные)",
+    "price": 1800,
+    "description": "Фриволите",
+    "media": [
+      {
+        "id": "fc58158f-1361-4604-9b68-424c637be1e9",
+        "type": "image",
+        "src": "images/ukrasheniya/3ed87b19-51b4-425a-8043-cd558d76df9e.jpg"
+      }
+    ]
+  },
+  {
+    "id": "75b3bff2-71e9-4ae7-9679-94dba19a7ab6",
+    "visible": true,
+    "order": 4,
+    "category": "ukrasheniya",
+    "name": "Серьги",
+    "price": 1800,
+    "description": "Фриволите",
+    "image": "images/ukrasheniya/75b3bff2-71e9-4ae7-9679-94dba19a7ab6.jpg",
+    "media": [
+      {
+        "id": "5c24349a-2447-4d0e-9ec7-42212c563805",
+        "type": "image",
+        "src": "images/ukrasheniya/75b3bff2-71e9-4ae7-9679-94dba19a7ab6.jpg"
+      }
+    ]
   }
 ]
