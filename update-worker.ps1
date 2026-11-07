@@ -54,6 +54,22 @@ try {
   RelaunchAndExit 1
 }
 
+# Админка.exe при каждом запуске распаковывает себя во временную папку, и
+# антивирус иногда удаляет оттуда ffmpeg.dll (ложное срабатывание) — тогда
+# Windows пишет "ffmpeg.dll не найден". В папке репозитория лежит запасная
+# копия (copy-to-root.js), а здесь один раз добавляем эту папку в PATH
+# пользователя, чтобы Windows сама её нашла, если основная копия пропадёт.
+try {
+  $repoFull = (Resolve-Path -LiteralPath $Repo).ProviderPath.TrimEnd('\')
+  $userPath = [Environment]::GetEnvironmentVariable("PATH", "User")
+  $already = $userPath -split ";" | Where-Object { $_.TrimEnd('\') -ieq $repoFull }
+  if (-not $already) {
+    $newPath = if ($userPath) { "$userPath;$repoFull" } else { $repoFull }
+    [Environment]::SetEnvironmentVariable("PATH", $newPath, "User")
+  }
+  if ($env:PATH -notlike "*$repoFull*") { $env:PATH = "$repoFull;$env:PATH" }
+} catch {}
+
 $branch = (git rev-parse --abbrev-ref HEAD 2>$null)
 if (-not $branch) { $branch = "master" }
 
