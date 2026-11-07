@@ -41,9 +41,15 @@ if (-not $Exe -or -not (Test-Path -LiteralPath $Exe)) {
 
 if ($Exe) {
   $exeName = [System.IO.Path]::GetFileNameWithoutExtension($Exe)
-  while (Get-Process -Name $exeName -ErrorAction SilentlyContinue) {
+  # Ждём закрытия максимум 10 секунд — раньше ждали бесконечно, и если
+  # процесс зависал (например, за ним осталось открытым окно системной
+  # ошибки), всё обновление вставало намертво без единой подсказки.
+  $waited = 0
+  while ((Get-Process -Name $exeName -ErrorAction SilentlyContinue) -and ($waited -lt 10000)) {
     Start-Sleep -Milliseconds 300
+    $waited += 300
   }
+  Get-Process -Name $exeName -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 }
 
 try {
