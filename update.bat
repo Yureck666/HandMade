@@ -39,3 +39,7 @@ copy /y "%WORKER%" "%TEMPWORKER%" >nul
 
 powershell -NoProfile -ExecutionPolicy Bypass -File "%TEMPWORKER%" -Repo "%REPO%" -Exe "%EXE%" -Mode "%MODE%"
 endlocal
+rem Force the console window closed no matter how it was opened - "start"
+rem launching a .bat file can end up using "cmd /k" on some systems, which
+rem leaves an interactive prompt sitting open instead of closing the window.
+exit
