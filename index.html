@@ -22,7 +22,7 @@
 
 <main>
   <section class="hero">
-    <p>Здесь живут украшения и игрушки, сделанные вручную — с теплом и вниманием к мелочам.</p>
+    <p id="heroText">Здесь живут украшения и игрушки, сделанные вручную — с теплом и вниманием к мелочам.</p>
   </section>
 
   <div id="categoriesRoot"></div>
@@ -33,6 +33,14 @@
   <div class="contact-buttons" id="contactButtons"></div>
   <p class="footer-signature">Уютный уголок</p>
 </footer>
+
+<div id="lightbox" class="lightbox hidden" aria-hidden="true">
+  <button type="button" class="lightbox-close" aria-label="Закрыть">×</button>
+  <button type="button" class="lightbox-arrow lightbox-prev" aria-label="Предыдущее">‹</button>
+  <div id="lightboxContent" class="lightbox-content"></div>
+  <button type="button" class="lightbox-arrow lightbox-next" aria-label="Следующее">›</button>
+  <div id="lightboxDots" class="lightbox-dots"></div>
+</div>
 
 <script src="js/app.js"></script>
 </body>
