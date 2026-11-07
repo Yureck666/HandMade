@@ -129,6 +129,39 @@ function createMediaSlide(item) {
   return slide;
 }
 
+const DESCRIPTION_LIMIT = 100;
+
+function appendDescription(desc, text) {
+  if (text.length <= DESCRIPTION_LIMIT) {
+    desc.textContent = text;
+    return;
+  }
+
+  let cutAt = text.lastIndexOf(" ", DESCRIPTION_LIMIT);
+  if (cutAt <= 0) cutAt = DESCRIPTION_LIMIT;
+  const truncated = text.slice(0, cutAt).trimEnd() + "…";
+
+  const textSpan = document.createElement("span");
+  textSpan.className = "description-text";
+  textSpan.textContent = truncated;
+
+  const toggle = document.createElement("a");
+  toggle.href = "#";
+  toggle.className = "description-toggle";
+  toggle.textContent = "Развернуть";
+
+  let expanded = false;
+  toggle.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    expanded = !expanded;
+    textSpan.textContent = expanded ? text : truncated;
+    toggle.textContent = expanded ? "Скрыть" : "Развернуть";
+  });
+
+  desc.append(textSpan, " ", toggle);
+}
+
 function renderCard(product) {
   const card = document.createElement("article");
   card.className = "product-card";
@@ -220,7 +253,7 @@ function renderCard(product) {
 
   const desc = document.createElement("p");
   desc.className = "description";
-  desc.textContent = product.description || "";
+  appendDescription(desc, product.description || "");
 
   const ask = document.createElement("a");
   ask.className = "btn btn-ask";

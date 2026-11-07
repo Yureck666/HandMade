@@ -319,6 +319,18 @@ h1, h2, h3, .logo {
   flex: 1;
 }
 
+.description-toggle {
+  display: block;
+  color: var(--accent-burgundy);
+  cursor: pointer;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+
+.description-toggle:hover {
+  text-decoration: none;
+}
+
 .btn-ask {
   align-self: flex-start;
   margin-top: 8px;
@@ -492,4 +504,7 @@ body.lightbox-open { overflow: hidden; }
   .lightbox-arrow { width: 38px; height: 38px; font-size: 20px; }
   .lightbox-prev { left: 6px; }
   .lightbox-next { right: 6px; }
+
+  .main-nav { display: none; }
+  .header-inner { justify-content: space-between; }
 }
